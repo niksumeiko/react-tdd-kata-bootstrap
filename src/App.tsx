@@ -16,14 +16,35 @@ const router = createMemoryRouter([
         element: (
             <div>
                 <header>
-                    Navigate:{' '}
                     <Link to="private">
                         <u>Private</u>
                     </Link>
+                    <Link to="/login">Login</Link>
                 </header>
                 <hr />
                 <br />
                 <h1>Home page</h1>
+            </div>
+        ),
+    },
+    {
+        path: '/login',
+        element: (
+            <div>
+                <header>
+                    Navigate:{' '}
+                    <Link to="/">
+                        <u>Home</u>
+                    </Link>
+                </header>
+                <hr />
+                <br />
+                <h2>Login page</h2>
+                <form>
+                    <input type="email" name="email" />
+                    <input type="password" name="password" />
+                    <button type="submit">Submit</button>
+                </form>
             </div>
         ),
     },
