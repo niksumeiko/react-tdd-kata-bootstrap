@@ -2,6 +2,9 @@ import type { FC } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createMemoryRouter, Link, Outlet, RouterProvider } from 'react-router-dom';
 
+import { LoginPage } from './pages/login';
+import { HomePage } from './pages/home';
+
 const Protected: FC = () => {
     // Handle protecting logic here
 
@@ -13,40 +16,11 @@ const router = createMemoryRouter([
     {
         index: true,
         path: '/',
-        element: (
-            <div>
-                <header>
-                    <Link to="private">
-                        <u>Private</u>
-                    </Link>
-                    <Link to="/login">Login</Link>
-                </header>
-                <hr />
-                <br />
-                <h1>Home page</h1>
-            </div>
-        ),
+        element: <HomePage />,
     },
     {
         path: '/login',
-        element: (
-            <div>
-                <header>
-                    Navigate:{' '}
-                    <Link to="/">
-                        <u>Home</u>
-                    </Link>
-                </header>
-                <hr />
-                <br />
-                <h2>Login page</h2>
-                <form>
-                    <input type="email" name="email" />
-                    <input type="password" name="password" />
-                    <button type="submit">Submit</button>
-                </form>
-            </div>
-        ),
+        element: <LoginPage />,
     },
     {
         element: <Protected />,

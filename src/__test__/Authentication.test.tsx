@@ -13,6 +13,20 @@ describe('Authentication', () => {
     });
 
     it('see my name after login', () => {
+        cy.intercept('POST', '/login', {
+            body: {
+                token: 'some-token',
+            },
+        });
+        cy.intercept('GET', '/user', {
+            body: {
+                id: 1,
+                name: 'Leo Messi',
+                email: 'x@y.z',
+                password: 'xyz',
+            },
+        });
+        // cy.setCookie('token', 'some-token');
         cy.mount(<App />);
 
         cy.get('a').contains('Login').click();
@@ -20,6 +34,6 @@ describe('Authentication', () => {
         cy.get('input[name="password"]').type('Password.1');
         cy.get('button[type="submit"]').click();
 
-        cy.get('p').contains('My Name').should('be.visible');
+        cy.get('p').contains('Leo Messi').should('be.visible');
     });
 });
