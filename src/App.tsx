@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createBrowserRouter, Link, Outlet, RouterProvider } from 'react-router-dom';
+import { createMemoryRouter, Link, Outlet, RouterProvider } from 'react-router-dom';
 
 const Protected: FC = () => {
     // Handle protecting logic here
@@ -9,8 +9,9 @@ const Protected: FC = () => {
 };
 
 const queryClient = new QueryClient();
-const router = createBrowserRouter([
+const router = createMemoryRouter([
     {
+        index: true,
         path: '/',
         element: (
             <div>
