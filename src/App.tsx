@@ -1,56 +1,23 @@
 import type { FC } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createMemoryRouter, Link, Outlet, RouterProvider } from 'react-router-dom';
+import type { RouteObject } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import { LoginPage } from './pages/login';
-import { HomePage } from './pages/home';
-
-const Protected: FC = () => {
-    // Handle protecting logic here
-
-    return <Outlet />;
-};
+import { routes } from './routes';
 
 const queryClient = new QueryClient();
-const router = createMemoryRouter([
-    {
-        index: true,
-        path: '/',
-        element: <HomePage />,
-    },
-    {
-        path: '/login',
-        element: <LoginPage />,
-    },
-    {
-        element: <Protected />,
-        children: [
-            {
-                path: 'private',
-                element: (
-                    <div>
-                        <header>
-                            Navigate:{' '}
-                            <Link to="/">
-                                <u>Home</u>
-                            </Link>
-                        </header>
-                        <hr />
-                        <br />
-                        <h2>
-                            <em>Private</em> page
-                        </h2>
-                    </div>
-                ),
-            },
-        ],
-    },
-]);
 
-export const App: FC = () => {
+type Props = {
+    createRouter?(
+        routes: RouteObject[],
+        options?: Partial<{ initialEntries: string[] }>,
+    ): ReturnType<typeof createBrowserRouter>;
+};
+
+export const App: FC<Props> = ({ createRouter = createBrowserRouter }) => {
     return (
         <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
+            <RouterProvider router={createRouter(routes)} />
         </QueryClientProvider>
     );
 };

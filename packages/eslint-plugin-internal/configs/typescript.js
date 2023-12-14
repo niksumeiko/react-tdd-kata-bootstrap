@@ -22,6 +22,7 @@ module.exports = {
                     {
                         ignoreTypeReferences: true,
                         functions: false,
+                        variables: false,
                     },
                 ],
                 'no-shadow': 'off',

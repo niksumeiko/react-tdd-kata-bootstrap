@@ -30,6 +30,7 @@ module.exports = {
             'error',
             {
                 functions: false,
+                variables: false,
             },
         ],
         'no-unused-vars': [

@@ -1,14 +1,6 @@
-const http = require('http');
-const { URL } = require('url');
-const qs = require('querystring');
+const express = require('express');
+const formidable = require('express-formidable');
 require('dotenv').config();
-
-const PORT = process.env.APP_PORT;
-const DEFAULT_HEADERS = {
-    'Access-Control-Allow-Origin': 'http://localhost:5173',
-    'Access-Control-Allow-Methods': 'OPTIONS, POST, GET',
-    'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
-};
 
 /** Database */
 class DataBase {
@@ -55,11 +47,14 @@ function createRandomDelay() {
 }
 
 function writeResponse(res, data, statusCode) {
-    res.writeHead(statusCode, DEFAULT_HEADERS);
-    if (data) res.write(JSON.stringify(data));
+    res.status(statusCode);
+
+    if (data) {
+        res.json(data);
+    }
+
     res.end();
 }
-
 function wait(ms) {
     return new Promise((resolve) => {
         setTimeout(() => resolve(), ms ?? createRandomDelay());
@@ -70,74 +65,49 @@ function writeSuccess(res, data) {
     writeResponse(res, data, 200);
 }
 
-function writeErrors(res, errors, statusCode = 500) {
+function writeErrors(res, statusCode = 500, errors) {
     writeResponse(res, errors, statusCode);
 }
 
-function getRequestUrl(req) {
-    const host = req.getHeader('host');
-    return new URL(req.url, `http://${host}/`);
-}
+/** Initialization */
+const db = new DataBase();
 
-function getPostData(req) {
-    return new Promise((resolve) => {
-        let body = '';
+db.addUser({ id: 1, name: 'Leo Messi', email: 'x@y.z', password: 'xyz' });
 
-        req.on('data', (data) => {
-            body += data;
-        });
+/** API */
+const app = express();
 
-        req.on('end', function () {
-            resolve(qs.parse(body));
-        });
+app.use(formidable());
+app.use((req, res, next) => {
+    res.set({
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'OPTIONS, POST, GET',
+        'Access-Control-Allow-Headers':
+            'Origin, X-Requested-With, Content-Type, Accept, Authorization',
     });
-}
+    next();
+});
 
-/** Handlers */
-async function handleUserEndpoint(req, res) {
-    const auth = req.getHeader('Authorization');
-
-    if (!req.hasHeader('Authorization')) {
-        return writeErrors(res, undefined, 401);
+app.post('/login', async (req, res) => {
+    if (!req.fields.email || !req.fields.password) {
+        return writeErrors(res, 412, [{ error: 'MISSING_CREDENTIALS' }]);
     }
 
-    if (!auth.startsWith('Bearer ')) {
-        return writeErrors(res, undefined, 401);
-    }
-
-    const [, token] = auth.split(' ');
-    const user = db.getUserByToken(token);
-
-    if (!user) {
-        return writeErrors(res, undefined, 404);
-    }
-
-    await wait();
-    return writeSuccess(res, user);
-}
-
-async function handleLoginEndpoint(req, res) {
-    const data = await getPostData(req);
-
-    if (!data.email || !data.password) {
-        return writeErrors(req, [{ error: 'MISSING_CREDENTIALS' }], 412);
-    }
-
-    const email = data.email.trim();
-    const password = data.password.trim();
+    const email = req.fields.email.trim();
+    const password = req.fields.password.trim();
     const user = db.getUserByCredentials({ email, password });
 
     if (!user) {
-        return writeErrors(req, undefined, 404);
+        return writeErrors(res, 404);
     }
 
-    db.login(user);
+    const { token } = db.login(user);
     await wait();
-    return writeSuccess(res);
-}
+    return writeSuccess(res, { token });
+});
 
-async function handleLogoutEndpoint(req, res) {
-    const { Authorization: auth = '' } = req.getHeaders();
+app.post('/logout', async (req, res) => {
+    const auth = req.get('Authorization') ?? '';
     const [, token] = auth.split(' ');
 
     if (!token) {
@@ -153,34 +123,26 @@ async function handleLogoutEndpoint(req, res) {
     db.logout(user);
     await wait();
     return writeSuccess(res);
-}
+});
 
-/** Initialization */
-const db = new DataBase();
-db.addUser({ id: 1, name: 'Leo Messi', email: 'x@y.z', password: 'xyz' });
+app.get('/user', async (req, res) => {
+    const auth = req.get('Authorization') ?? '';
 
-http.createServer((req, res) => {
-    const { pathname } = getRequestUrl(req);
-
-    if (req.method === 'OPTIONS') {
-        return writeResponse(res, undefined, 204);
+    if (!auth.startsWith('Bearer ')) {
+        return writeErrors(res, 401);
     }
 
-    if (req.method === 'GET') {
-        if (pathname === '/user') {
-            return handleUserEndpoint(req, res);
-        }
+    const [, token] = auth.split(' ');
+    const user = db.getUserByToken(token);
+
+    if (!user) {
+        return writeErrors(res, 404);
     }
 
-    if (req.method === 'POST') {
-        if (pathname === '/login') {
-            return handleLoginEndpoint(req, res);
-        }
+    await wait();
+    return writeSuccess(res, user);
+});
 
-        if (pathname === '/logout') {
-            return handleLogoutEndpoint(req, res);
-        }
-    }
-
-    writeErrors(res, [{ message: 'Not found' }], 404);
-}).listen(PORT, () => console.info('API ready/started'));
+app.listen(process.env.APP_PORT, () => {
+    console.info(`API ready/started: ${process.env.API_URL}`);
+});
