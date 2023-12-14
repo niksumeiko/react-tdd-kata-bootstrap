@@ -22,7 +22,6 @@ export const HomePage = () => {
 
     useEffect(() => {
         const token = getCookie('token');
-        console.log({ token });
         if (!token) return;
 
         fetch('/user', {

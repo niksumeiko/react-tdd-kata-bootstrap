@@ -20,9 +20,9 @@ class DataBase {
     }
 
     login({ id }) {
-       const user = this.getUserById(id);
-       user.token = createToken();
-       return user;
+        const user = this.getUserById(id);
+        user.token = createToken();
+        return user;
     }
 
     logout({ id }) {
@@ -39,7 +39,9 @@ class DataBase {
     }
 
     getUserByCredentials({ email, password }) {
-        return this.#users.find((user) => user.email === email && user.password === password);
+        return this.#users.find(
+            (user) => user.email === email && user.password === password,
+        );
     }
 }
 
@@ -73,7 +75,8 @@ function writeErrors(res, errors, statusCode = 500) {
 }
 
 function getRequestUrl(req) {
-    return new URL(req.url, `http://${req.getHeaders().host}/`);
+    const host = req.getHeader('host');
+    return new URL(req.url, `http://${host}/`);
 }
 
 function getPostData(req) {
@@ -84,7 +87,7 @@ function getPostData(req) {
             body += data;
         });
 
-        request.on('end', function () {
+        req.on('end', function () {
             resolve(qs.parse(body));
         });
     });
@@ -92,7 +95,7 @@ function getPostData(req) {
 
 /** Handlers */
 async function handleUserEndpoint(req, res) {
-    const { Authorization: auth } = req.getHeaders();
+    const auth = req.getHeader('Authorization');
 
     if (!req.hasHeader('Authorization')) {
         return writeErrors(res, undefined, 401);
